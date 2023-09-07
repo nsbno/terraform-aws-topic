@@ -1,0 +1,26 @@
+= SNS Topic
+:!toc-title:
+:!toc-placement:
+:toc:
+
+Create a standard Vy SNS topic
+
+toc::[]
+
+== About
+This module creates SNS topics for your infrastructure at Vy
+
+== Usage
+To use this module, just add it to your terraform!
+
+// TODO: Add variables to the module example!
+
+[source, hcl]
+----
+module "topic" {
+  source = "github.com/nsbno/terraform-aws-topic?ref=x.y.z"
+
+  name = "i-send-messages-to-people"
+}
+----
+
