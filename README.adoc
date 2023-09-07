@@ -13,8 +13,6 @@ This module creates SNS topics for your infrastructure at Vy
 == Usage
 To use this module, just add it to your terraform!
 
-// TODO: Add variables to the module example!
-
 [source, hcl]
 ----
 module "topic" {
