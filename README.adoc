@@ -22,3 +22,8 @@ module "topic" {
 }
 ----
 
+
+== Examples
+
+link:examples/allow_external_subscribers/[Allow external subscribers]::
+This example shows how to allow external subscribers to your topic

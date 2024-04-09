@@ -11,6 +11,13 @@ variable "allowed_external_subscribers" {
   default = []
 }
 
+variable "allow_anyone_in_organization_to_subscribe" {
+  description = "Allow anyone within the current AWS organization to subscribe to the topic"
+
+  type    = bool
+  default = false
+}
+
 variable "create_payload_bucket" {
   description = "Create an S3 bucket where large messages can be placed"
 

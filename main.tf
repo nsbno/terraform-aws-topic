@@ -2,8 +2,39 @@ resource "aws_sns_topic" "this" {
   name = var.name
 }
 
-data "aws_iam_policy_document" "external_subscribers" {
+data "aws_organizations_organization" "current" {}
+
+data "aws_iam_policy_document" "vy_org_subscribers" {
+  # Allow vy organization to subscribe to the topic
   statement {
+    sid = "AllowVyOrganization"
+
+    effect = "Allow"
+
+    actions   = ["SNS:Subscribe"]
+    resources = [aws_sns_topic.this.arn]
+
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:PrincipalOrgID"
+      values   = [data.aws_organizations_organization.current.id]
+    }
+  }
+}
+
+data "aws_iam_policy_document" "external_subscribers" {
+  source_policy_documents = var.allow_anyone_in_organization_to_subscribe ? [
+    data.aws_iam_policy_document.vy_org_subscribers.json
+  ] : []
+
+  statement {
+    sid = "AllowExternalSubscribers"
+
     effect = "Allow"
 
     principals {
@@ -17,13 +48,19 @@ data "aws_iam_policy_document" "external_subscribers" {
   }
 }
 
+
+locals {
+  should_apply_policies = length(var.allowed_external_subscribers) > 0 || var.allow_anyone_in_organization_to_subscribe
+}
+
 resource "aws_sns_topic_policy" "external_subscribers" {
-  count = length(var.allowed_external_subscribers) > 0 ? 1 : 0
+  count = local.should_apply_policies ? 1 : 0
 
   arn    = aws_sns_topic.this.arn
   policy = data.aws_iam_policy_document.external_subscribers.json
 }
 
+# == S3 Payload Bucket for large messages ==
 data "aws_caller_identity" "current" {}
 
 resource "aws_s3_bucket" "large_message_payload" {
@@ -43,14 +80,36 @@ resource "aws_s3_bucket_lifecycle_configuration" "large_messages_bucket_lifecycl
   }
 }
 
-resource "aws_s3_bucket_policy" "allow_external_read" {
-  count  = var.create_payload_bucket && length(var.allowed_external_subscribers) > 0 ? 1 : 0
-  bucket = aws_s3_bucket.large_message_payload[0].id
-  policy = data.aws_iam_policy_document.allow_external_read[0].json
+data "aws_iam_policy_document" "allow_organization_read" {
+  count = var.create_payload_bucket ? 1 : 0
+
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "AWS"
+      identifiers = data.aws_organizations_organization.current.arn
+    }
+
+    actions = [
+      "s3:GetObject",
+      "s3:ListBucket",
+    ]
+
+    resources = [
+      aws_s3_bucket.large_message_payload[0].arn,
+      "${aws_s3_bucket.large_message_payload[0].arn}/*",
+    ]
+  }
 }
 
 data "aws_iam_policy_document" "allow_external_read" {
-  count = var.create_payload_bucket == true ? 1 : 0
+  count = var.create_payload_bucket ? 1 : 0
+
+  source_policy_documents = var.allow_anyone_in_organization_to_subscribe ? [
+    data.aws_iam_policy_document.allow_organization_read[0].json
+  ] : []
+
   statement {
     effect = "Allow"
 
@@ -69,4 +128,11 @@ data "aws_iam_policy_document" "allow_external_read" {
       "${aws_s3_bucket.large_message_payload[0].arn}/*",
     ]
   }
+}
+
+resource "aws_s3_bucket_policy" "allow_external_read" {
+  count = var.create_payload_bucket && local.should_apply_policies ? 1 : 0
+
+  bucket = aws_s3_bucket.large_message_payload[0].id
+  policy = data.aws_iam_policy_document.allow_external_read[0].json
 }
