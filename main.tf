@@ -28,10 +28,7 @@ data "aws_iam_policy_document" "vy_org_subscribers" {
 }
 
 data "aws_iam_policy_document" "external_subscribers" {
-  source_policy_documents = var.allow_anyone_in_organization_to_subscribe ? [
-    data.aws_iam_policy_document.vy_org_subscribers.json
-  ] : []
-
+  # Allow accounts enumerated in allowed_external_subscribers to subscribe to the topic
   statement {
     sid = "AllowExternalSubscribers"
 
