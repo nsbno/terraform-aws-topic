@@ -28,10 +28,7 @@ data "aws_iam_policy_document" "vy_org_subscribers" {
 }
 
 data "aws_iam_policy_document" "external_subscribers" {
-  source_policy_documents = var.allow_anyone_in_organization_to_subscribe ? [
-    data.aws_iam_policy_document.vy_org_subscribers.json
-  ] : []
-
+  # Allow accounts enumerated in allowed_external_subscribers to subscribe to the topic
   statement {
     sid = "AllowExternalSubscribers"
 
@@ -50,14 +47,25 @@ data "aws_iam_policy_document" "external_subscribers" {
 
 
 locals {
+  org_policy_document = var.allow_anyone_in_organization_to_subscribe ? [
+    data.aws_iam_policy_document.vy_org_subscribers.json
+  ] : []
+  external_policy_document = length(var.allowed_external_subscribers) > 0 ? [
+    data.aws_iam_policy_document.external_subscribers.json
+  ] : []
   should_apply_policies = length(var.allowed_external_subscribers) > 0 || var.allow_anyone_in_organization_to_subscribe
+}
+
+data "aws_iam_policy_document" "combined_resource_policy" {
+  count                   = local.should_apply_policies ? 1 : 0
+  source_policy_documents = concat(local.org_policy_document, local.external_policy_document)
 }
 
 resource "aws_sns_topic_policy" "external_subscribers" {
   count = local.should_apply_policies ? 1 : 0
 
   arn    = aws_sns_topic.this.arn
-  policy = data.aws_iam_policy_document.external_subscribers.json
+  policy = data.aws_iam_policy_document.combined_resource_policy[0].json
 }
 
 # == S3 Payload Bucket for large messages ==
