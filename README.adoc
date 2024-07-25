@@ -3,15 +3,12 @@
 :!toc-placement:
 :toc:
 
-Create a standard Vy SNS topic
+This module creates SNS topics for your infrastructure at Vy.
 
 toc::[]
 
-== About
-This module creates SNS topics for your infrastructure at Vy
-
 == Usage
-To use this module, just add it to your terraform!
+Remember to check out the link:variables.tf[*variables*] and link:outputs.tf[*outputs*] to see all options.
 
 [source, hcl]
 ----
