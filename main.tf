@@ -96,7 +96,7 @@ data "aws_iam_policy_document" "allow_organization_read" {
 
     principals {
       type        = "AWS"
-      identifiers = data.aws_organizations_organization.current.arn
+      identifiers = [data.aws_organizations_organization.current.arn]
     }
 
     actions = [
