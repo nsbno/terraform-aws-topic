@@ -1,7 +1,7 @@
 resource "aws_sns_topic" "this" {
   name = var.is_fifo ? "${var.name}.fifo" : var.name
 
-  fifo_topic = var.is_fifo
+  fifo_topic                  = var.is_fifo
   content_based_deduplication = var.use_content_based_deduplication
 }
 
