@@ -1,5 +1,8 @@
 resource "aws_sns_topic" "this" {
-  name = var.name
+  name = var.is_fifo ? "${var.name}.fifo" : var.name
+
+  fifo_topic = var.is_fifo
+  content_based_deduplication = var.use_content_based_deduplication
 }
 
 data "aws_organizations_organization" "current" {}
@@ -73,7 +76,7 @@ data "aws_caller_identity" "current" {}
 
 resource "aws_s3_bucket" "large_message_payload" {
   count  = var.create_payload_bucket ? 1 : 0
-  bucket = "${data.aws_caller_identity.current.account_id}-sns-payloads-for-${var.name}"
+  bucket = "${data.aws_caller_identity.current.account_id}-sns-payloads-for-${var.name}${var.is_fifo ? ".fifo" : ""}"
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "large_messages_bucket_lifecycle_configuration" {

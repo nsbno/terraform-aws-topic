@@ -2,6 +2,11 @@ variable "name" {
   description = "The name of the topic"
 
   type = string
+
+  validation {
+    condition     = !can(regex("\\.fifo$", var.name))
+    error_message = "Use the is_fifo variable to create a FIFO topic."
+  }
 }
 
 variable "allowed_external_subscribers" {
@@ -30,4 +35,18 @@ variable "payload_bucket_expiration_days" {
 
   type    = number
   default = 7
+}
+
+variable "is_fifo" {
+  description = "Create a FIFO topic"
+
+  type    = bool
+  default = false
+}
+
+variable "use_content_based_deduplication" {
+  description = "Enables content-based deduplication for FIFO topic"
+
+  type    = bool
+  default = false
 }
