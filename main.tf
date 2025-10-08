@@ -85,9 +85,12 @@ resource "aws_s3_bucket_lifecycle_configuration" "large_messages_bucket_lifecycl
   rule {
     id     = "object-expiration"
     status = "Enabled"
+
     expiration {
       days = var.payload_bucket_expiration_days
     }
+
+    filter {}
   }
 }
 
